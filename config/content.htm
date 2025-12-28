@@ -12,7 +12,221 @@
 <p style="padding-left: 60px;">w18: 課程總結</p>
 <p style="padding-left: 30px;"><span style="background-color: #ffff00;">個人與分組網站維護 (40%)</span> - 每週至少兩次推送與課程進度相關的學習內容與心得。</p>
 <p style="padding-left: 60px;">w9 期中自評、w18 期末自評</p>
-<h1>41323236</h1>
+<h1>HW2</h1>
+<p>一個五連桿平面機構，固定點 A 與 E 的座標分別為 (0, 0), (-50, 0), link1 從 A 點連接向 B 點長度, 為一個直角三角形的斜邊, 此三角形的長邊尺寸為 50, 短邊尺寸為 45, link2 從 B 點連接向 C 點, 長度為 110, link3 從 C 點連接向 D 點長度也是 110, 而最後 link4 從 D 點連接向 E 點 長度也是一個直角三角形的斜邊, 此三角形的長邊尺寸為 50, 短邊尺寸為 45。請問 link1 及 llink4 的長度分別為多少?<br/><br/>假設 A 點與 E 點分別裝設步進馬達, 其 A 點的旋轉角度是由其點右邊延伸水平線作為旋轉 0 度點，B 點起始點位於 X 軸上, 且旋轉方向為順時針方向, 而 E 點的旋轉角度則是由其點左邊延伸水平線作為旋轉 0 度點, D 點起始點也是位於 X 軸上, 且旋轉方向為逆時針方向旋轉, link1 的旋轉角度設為 theta1, 角度單位為 degree, 而 link4 的旋轉角度設為 theta2, 角度單位也是 degree, 請先利用此平面機構的兩個輸入角度作為函式的輸入變數, 用 link1 、link2、link3、link4 代表這四個連桿長度的符號名稱，且將此函數命名為 forward(theta1, theta2), 請利用正向運動學 (Forward Kinematics) 的方式，採符號運算法 (Symbolic Formulation)，利用 Python 的 sympy 模組, 讓 forward 函式的輸出為點 C 的 X 與 Y 座標。 請推導。 另外也請利用逆向運動學 (Inverse Kinematics) 的方式, 採符號運算法 (Symbolic Formulation)，利用 Python 的 sympy 模組, 讓 Inverse(C 點的 X 座標, C 點的 Y 座標) 函式的輸出為對應的 theta1 與 theta2 的轉角表示式。 請推導, 且各推導過程均列出機構各點的 floating point 座標點的位置.</p>
+<p><a href="https://mde.tw/cad2025/downloads/fivebar_robot_2d.slvs">fivebar_robot_2d.slvs</a></p>
+<p><img alt="" height="303" src="https://mde.tw/cad2025/images/fivebar_linkage_2d.png" width="300"/></p>
+<p>利用畢氏定理計算 link1 與 link4 的長度</p>
+<p>因此定義如下:</p>
+<div>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">import sympy as sp
+ L1 = L4 = sp.sqrt(45**2 + 50**2)  # ≈ 67.24
+L2 = 110
+L3 = 110</pre>
+<p><span>Forward Kinematics(</span><span class="Y2IQFc" lang="zh-TW">正向運動學)</span></p>
+<p>目標是定義 forward(theta1, theta2) 輸出點 C 的 (x, y)。</p>
+<p>幾何分析</p>
+<p><img alt="" height="93" src="/images/螢幕擷取畫面 2025-12-28 174314.png" width="420"/></p>
+<p>先定義這些變數並推導 B、D、C 的位置。</p>
+<p>forward 函式: <a href="https://mde.tw/cad2025/downloads/fivebar_forward.py">fivebar_forward.py</a></p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false">import sympy as sp
+ 
+# 正向運動學：給定角度與長度，求 C 點（兩個構型）
+def forward(theta1_deg, theta2_deg, l1, l2, l3, l4):
+    # 角度轉弧度，考慮旋轉方向
+    theta1 = -theta1_deg * sp.pi / 180             # A 點，順時針
+    theta2 = (180 + theta2_deg) * sp.pi / 180      # E 點，左水平方向起點，逆時針旋轉
+ 
+    # 固定點座標
+    Ax, Ay = 0, 0
+    Ex, Ey = -50, 0
+ 
+    # B, D 點位置
+    Bx = Ax + l1 * sp.cos(theta1)
+    By = Ay + l1 * sp.sin(theta1)
+    Dx = Ex + l4 * sp.cos(theta2)
+    Dy = Ey + l4 * sp.sin(theta2)
+ 
+    # 向量 BD
+    vec_x = Dx - Bx
+    vec_y = Dy - By
+    d = sp.sqrt(vec_x**2 + vec_y**2)
+ 
+    # 中點 M
+    Mx = (Bx + Dx) / 2
+    My = (By + Dy) / 2
+ 
+    # 高（從 M 垂直方向偏移）
+    try:
+        h = sp.sqrt(l2**2 - (d / 2)**2)
+    except:
+        raise ValueError("構型不可行：連桿無法形成三角形")
+ 
+    # 單位向量 u = BD / ||BD||
+    ux = vec_x / d
+    uy = vec_y / d
+ 
+    # 垂直向量（旋轉 90°）
+    vx = -uy
+    vy = ux
+ 
+    # C 點 1（上構型）
+    C1x = Mx + h * vx
+    C1y = My + h * vy
+ 
+    # C 點 2（下構型）
+    C2x = Mx - h * vx
+    C2y = My - h * vy
+ 
+    print("B 點座標:", float(Bx.evalf()), float(By.evalf()))
+    print("D 點座標:", float(Dx.evalf()), float(Dy.evalf()))
+    print("C 點 1（上構型）:", float(C1x.evalf()), float(C1y.evalf()))
+    print("C 點 2（下構型）:", float(C2x.evalf()), float(C2y.evalf()))
+ 
+    return (float(C1x.evalf()), float(C1y.evalf())), (float(C2x.evalf()), float(C2y.evalf()))
+     
+print(forward(30, 45, 67.27, 110, 110, 67.27))</pre>
+<p><span>Inverse Kinematics: </span><a href="https://mde.tw/cad2025/downloads/fivebar_inverse.py">fivebar_inverse.py</a></p>
+<p><img alt="" height="17" src="/images/螢幕擷取畫面 2025-12-28 174554.png" width="729"/></p>
+<p><span>幾何觀念</span></p>
+<ol>
+<li>給定 C 點座標，要反推出：</li>
+<li>B 點在以 A 為中心，半徑為 L1 的圓周上</li>
+<li>D 點在以 E 為中心，半徑為 L4 的圓周上</li>
+<li>B → C 與 D → C 分別長 L2, L3</li>
+<li>使用向量反推、餘弦定理與 atan2 組合來求解旋轉角。</li>
+</ol>
+<p><span>Inverse Kinematics:</span></p>
+<pre class="brush:html;auto-links:false;toolbar:false" contenteditable="false"># 逆向運動學：輸入 C 點位置與桿長，反推所有可能的角度組合
+import sympy as sp
+ 
+def inverse(cx_val, cy_val, l1_val, l2_val, l3_val, l4_val):
+    # 定義符號變數
+    Cx, Cy, L1, L2, L3, L4 = sp.symbols('Cx Cy L1 L2 L3 L4', real=True)
+ 
+    # 固定點 A 與 E
+    Ax, Ay = 0, 0
+    Ex, Ey = -50, 0
+ 
+    # ========== θ₁（順時針，從 +X 起算） ==========
+    vec_A = sp.Matrix([Cx - Ax, Cy - Ay])
+    r1 = vec_A.norm()
+    angle_A = sp.atan2(vec_A[1], vec_A[0])
+    cos_alpha1 = (L1**2 + r1**2 - L2**2) / (2 * L1 * r1)
+    cos_alpha1 = sp.Max(-1, sp.Min(1, cos_alpha1))  # 保護 acos 領域
+    alpha1 = sp.acos(cos_alpha1)
+    theta1_a = -sp.deg(angle_A - alpha1)
+    theta1_b = -sp.deg(angle_A + alpha1)
+ 
+    # ========== θ₂（逆時針，從 –X 起算） ==========
+    vec_E = sp.Matrix([Cx - Ex, Cy - Ey])
+    r2 = vec_E.norm()
+    angle_E = sp.atan2(vec_E[1], vec_E[0])
+    cos_alpha2 = (L4**2 + r2**2 - L3**2) / (2 * L4 * r2)
+    cos_alpha2 = sp.Max(-1, sp.Min(1, cos_alpha2))  # 保護 acos 領域
+    alpha2 = sp.acos(cos_alpha2)
+    # 補回 forward 中的 +180°
+    theta2_a = sp.deg(angle_E - alpha2) - 180
+    theta2_b = sp.deg(angle_E + alpha2) - 180
+ 
+    # 數值代入
+    subs = {
+        Cx: cx_val,
+        Cy: cy_val,
+        L1: l1_val,
+        L2: l2_val,
+        L3: l3_val,
+        L4: l4_val
+    }
+ 
+    try:
+        θ1a = float(theta1_a.evalf(subs=subs))
+        θ1b = float(theta1_b.evalf(subs=subs))
+        θ2a = float(theta2_a.evalf(subs=subs))
+        θ2b = float(theta2_b.evalf(subs=subs))
+    except Exception as e:
+        return [f"發生錯誤：{e}"]
+         
+    def normalize(a):
+        return round(a % 360, 4)
+ 
+ 
+    # 組合所有可能構型角度
+    results = [
+        (normalize(θ1a), normalize(θ2a)),
+        (normalize(θ1a), normalize(θ2b)),
+        (normalize(θ1b), normalize(θ2a)),
+        (normalize(θ1b), normalize(θ2b)),
+    ]
+ 
+    return results
+     
+print(inverse(-12.77, -117.63, 67.27, 110, 110, 67.27))
+</pre>
+<p></p>
+</div><h1>Tutorial</h1>
+<p>Webots 執行環境硬體需求:</p>
+<p>2GHz 4 核心以上 CPU, NVIDIA 或 AMD 支援 OpenGL 3.3 版, 帶有 512 MB 記憶體以上獨立顯示卡</p>
+<p>操作系統:</p>
+<p>Windows 10 或 11 64 位元操作系統</p>
+<p>Ubuntu 24.04 以上版本</p>
+<p>macOS 12 以上版本操作系統</p>
+<p>使用介面:</p>
+<p>Webots 可以透過 Tools - Preferences - Language 中選擇使用 English 或簡體中文介面 (目前無繁體中文介面, 介面語系翻譯請參考<span> </span><a href="https://github.com/cyberbotics/webots/tree/released/resources/translations">translations 頁面</a>說明), 在此強烈建議使用 English 界面即可.</p>
+<hr/>
+<p>Webots 原始碼使用授權:<br/><br/>採<span> </span><a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0 license agreement</a>. Apache 2.0 是一種開放且對企業友善的授權條款, 允許任何人免費使用、修改和分享軟體的原始程式碼, 包括商業用途使用.</p>
+<p>自行編譯 Webots 請參考<span> </span><a href="https://cyberbotics.com/doc/guide/building-webots">building Webots 頁面</a>說明.</p>
+<p>Webots 套件中的大部分範例模擬檔案都使用 Apache 2.0 許可釋出, 但有部分機器人和物件模型（proto 檔案）則是根據<span> </span><a href="https://cyberbotics.com/webots_assets_license">Webots 資產的開放原始碼許可協議</a>發佈, 另外有些範例則是由用戶根據不同的開源許可證所提供, 這些檔案都會明確標示其許可證內容.</p>
+<hr/>
+<p>Webots 介紹: (查英英字典:<span> </span><a href="https://www.merriam-webster.com/dictionary/">https://www.merriam-webster.com/dictionary/</a>)</p>
+<p><a href="https://cyberbotics.com/doc/guide/introduction-to-webots#what-is-webots">What is Webots?</a></p>
+<p><a href="https://cyberbotics.com/doc/guide/introduction-to-webots#what-can-i-do-with-webots">What can I do with Webots?</a></p>
+<p><a href="https://cyberbotics.com/doc/guide/introduction-to-webots#webots-simulation">Webots simulation</a></p>
+<p><a href="https://cyberbotics.com/doc/guide/introduction-to-webots#what-is-a-world">What is a world?</a></p>
+<p><a href="https://cyberbotics.com/doc/guide/introduction-to-webots#what-is-a-controller">What is a controller?</a></p>
+<p><a href="https://cyberbotics.com/doc/guide/introduction-to-webots#what-is-a-supervisor-controller">What is a supervisor controller?</a></p>
+<p><a href="https://www.youtube.com/playlist?list=PLt69C9MnPchkLuNNc4q9SeMFA96_v4THJ">Webots Crash Course</a><span> </span>(速成班教學影片)</p>
+<p><a href="https://github.com/felipenmartins/Robotics-Simulation-Labs">https://github.com/felipenmartins/Robotics-Simulation-Labs</a> </p>
+<hr/>
+<p>第一個 Webots 導引:<span> </span><a href="https://cyberbotics.com/doc/guide/tutorial-1-your-first-simulation-in-webots">https://cyberbotics.com/doc/guide/tutorial-1-your-first-simulation-in-webots</a></p>
+<p>登入 Github, 在<span> </span><a href="https://github.com/copilot">https://github.com/copilot</a><span> </span>的協助下執行此一教學練習.</p>
+<p>導引目的: You will create your first simulation containing a simple environment: an arena with floor and walls, a few boxes, an e-puck robot and a controller program that will make the robot move.</p>
+<p>建立一個簡單的模擬環境, 意即一個競技場中, 包括一個帶有地板、圍牆、幾個盒子、一個 e-puck 機器人, 以及能讓機器人移動的控制程式.</p>
+<p><img alt="" height="310" src="https://mde.tw/cad2025/images/tutorial_e-puck.thumbnail.jpg" width="400"/></p>
+<p>開啟 Webots 前, 請下載<span> </span><a href="http://229.cycu.org/cad_data.7z">cad_data.7z</a><span> </span>(包括 NX2312、Blender4.2 與 Webots2023b，4.2GB).</p>
+<p>有關 Webots 在 Windows 操作系統啟動, 請參考<a href="https://cyberbotics.com/doc/guide/starting-webots#windows">說明</a>. 有關 Web streaming 也請參考<a href="https://cyberbotics.com/doc/guide/web-streaming">說明</a>.</p>
+<p>Webots 的可執行檔案位於 Y:\Webots_2023b\msys64\mingw64\bin\Webotsw.exe, 配置時, 若希望在不上網的情況下執行官方範例, 則必須再預先下載 <a href="https://github.com/cyberbotics/webots/releases/tag/R2023b">https://github.com/cyberbotics/webots/releases/tag/R2023b</a> 中的 <a href="https://github.com/cyberbotics/webots/releases/download/R2023b/assets-R2023b.zip">assets-R2023b.zip</a>, 存入 Y:\home_ipv6\AppData\Local\Cyberbotics\Webots\cache\assets 目錄, 否則啟動官方範例時, 必須從官方網站下載各範例中所導入的原型節點資料.</p>
+<p>若 Webotsw.exe 並非是在可攜程式的環境中啟動, 則 Webots 啟動後所下載的原型節點資料, 將會存入操作系統中的 C:\Users\%USERNAME%\AppData\Local\Cyberbotics\Webots\cache\assets 目錄中.</p>
+<p>在可攜程式環境中啟動 Webots 的設定:</p>
+<p>start_ipv6.bat 中納入:</p>
+<p>REM for webots<br/>set  path_webots=%Disk%:\Webots_2023b\msys64\mingw64\bin;%Disk%:\Webots_2023b\msys64\usr\bin</p>
+<p>並將 %path_webots% 放入 PATH 環境變數設定中.</p>
+<p>若希望在執行 start_ipv6.bat 時開啟 Webots, 可以在啟動可攜程式的批次檔案中加入 start webotsw.exe</p>
+<p>在可攜程式環境中 (USB 固態硬碟、一般隨身碟、筆電或個人電腦) 啟動 Webots 後, 開始建立模擬世界(即場景), 而在 Webots 中所謂場景:</p>
+<p>A<span> </span><strong>World</strong><span> </span>is a file containing information like where the objects are, what they look like, how they interact with each other, what is the color of the sky, and the definitions of gravity, friction, masses of the objects, etc. It defines the initial state of a simulation. The different objects are called<span> </span><strong>Nodes</strong><span> </span>and are organized hierarchically in a<span> </span><strong>Scene Tree</strong>. Therefore, a node may contain sub-nodes. A world is stored in a file having the<span> </span><code>.wbt</code><span> </span>extension. The file format is derived from the <a href="https://mde.tw/cad2025/downloads/vrml97specification.pdf">VRML97</a><span> </span>language, and is human readable. The world files must be stored directly in a directory called<span> </span><code>worlds</code>.</p>
+<p>Webots 場景中包含以下定義:</p>
+<ol>
+<li>物件所在位置</li>
+<li>物件的外形</li>
+<li>物件如何互動</li>
+<li>天空的顏色</li>
+<li>地心引力的定義</li>
+<li>摩擦力</li>
+<li>物件的質量</li>
+<li>模擬的起始條件</li>
+<li>其他有關模擬的設定等</li>
+</ol>
+<p>場景中的物件稱為節點, 各節點配置於場景樹中, 各節點可以再包含子節點, 場景的檔案格式源自 VRML97 程式語法 (<a href="https://mde.tw/cad2025/downloads/vrmlman.pdf">VRML Primer and Tutorial</a>), 場景的檔案副檔名為 .wbt, 且一定要存入名稱為 worlds 的目錄中.</p>
+<p>Webots 模擬選單功能說明:<span> </span><a href="https://cyberbotics.com/doc/guide/the-user-interface#simulation-menu">https://cyberbotics.com/doc/guide/the-user-interface#simulation-menu</a><span> </span>其中著色選單可以關閉場景中的畫面, 主要配合基因演算、視覺辨識或機器學習流程中的快速模擬流程.</p>
+<h2>Stage1</h2>
+<p>學習利用 Webots 建立模擬場景的第一階段工作, 是認識其套件功能表與場景所需的目錄及檔案架構. 並且學習如何利用控制器程式操縱場景中的物件. 這也是<span> </span><a href="https://mde.tw/cad2025/content/Tutorial1.html">Tutorial1</a><span> </span>操作的主要目的.</p>
+<p>worlds 儲存 .wbt 場景檔案</p>
+<p>protos 儲存 .proto 原形節點檔案</p>
+<p>controllers 儲存控制器程式檔案</p>
+<p>plugins 儲存用來延伸 Webots 物理特性的 C 或 C++ 程式檔案, 例如:<span> </span><a href="https://raw.githubusercontent.com/cyberbotics/webots/refs/heads/released/resources/projects/plugins/physics/physics.c">physics.c</a></p>
+<p>libraries 儲存場景中與 controllers 或 plugins 目錄中相關程式的共用程式庫檔案</p>
+<p><a href="https://mde.tw/cad2025/content/Tutorial2.html">Tutorial2</a><span> </span>則說明如何使用 Webots 內建的基本幾何物件, 其中的物件幾何外形除了用於動力系統的運動方程式, 還可用於物體移動時的碰撞檢測. 建立物件時必須遵照 Solid - Shape - geometry 的樹狀結構規劃, 按照順序配置物件.</p>
+<p>其中 Solid - Shape - geometry Box 可以直接使用內建的幾何節點定義零件外形, 而 Solid - Shape - geometry Mesh 則可以導入自行繪製的 STL 或 OBJ 零件檔案, 而 Solid - CadShape 也可以導入 OBJ 零件檔案, 與 geometry Mesh 的差別為 Solid - Shape - geometry Mesh 可以直接在 Webots 中設定零件顏色, 而 Solid - CadShape 則由 OBJ 伴隨的 .mtl 決定其顏色與材質.</p><h1>41323236-陳韋岑</h1>
 <p><span>Tutorial1:</span></p>
 <p>學習利用 Webots 建立模擬場景的第一階段工作, 是認識其套件功能表與場景所需的目錄及檔案架構. 並且學習如何利用控制器程式操縱場景中的物件. 這也是<span> </span><a href="https://mde.tw/cad2025/content/Tutorial1.html">Tutorial1</a><span> </span>操作的主要目的.</p>
 <p>worlds 儲存 .wbt 場景檔案</p>
@@ -27,5 +241,11 @@
 <p><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/AhclNGBmljk?si=fmlkLtS39_YtaQz-" title="YouTube video player" width="560"></iframe></p>
 <p>老師的參考影片:</p>
 <p><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/f1z9yWpLkHk?si=qG0ipEhJGVetm9Nv" title="YouTube video player" width="560"></iframe></p>
-<p></p>
-<p></p>
+<p><span>Tutorial4:</span></p>
+<p><span>從二連桿到五連桿以及劃出圖的操做</span></p>
+<p>影片1</p>
+<p><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/bjoCY13g8kg?si=RlviXw-GKwBALpnF" title="YouTube video player" width="560"></iframe></p>
+<p><span>影片2 過程中,有材質沒設定到,導致機構無法作動</span></p>
+<p><span><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/Ew7E6iJEqJc?si=Z-4-CUBCtwv0_v-T" title="YouTube video player" width="560"></iframe></span></p>
+<p><span>老師的參考影片:</span></p>
+<p><span><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/VPyjCJ8JhYg?si=9OY55NYg_JGEeBNo" title="YouTube video player" width="560"></iframe></span></p>

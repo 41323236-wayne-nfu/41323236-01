@@ -2,6 +2,7 @@
         <head>
         <title>cad2025_hw</title>
         <meta charset="utf-8">
+<meta property="head" content="H1">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="./../cmsimde/static/chimper/fonts/icomoon/style.css">
         <link rel="stylesheet" href="./../cmsimde/static/chimper/css/bootstrap.min.css">
@@ -95,6 +96,7 @@ img.add_border {
 </head>
 <body>
 <div class='container'><nav>
+        
     <div class="site-wrap">
 
     <div class="site-mobile-menu">
@@ -140,4 +142,76 @@ img.add_border {
           </div>
           
         </header>
-    </nav><section><h1>SMap</h1><div id="tipue_search_content"></div><ul><li><a href='About.html'>About</a><li><a href='HW2.html'>HW2</a><li><a href='Tutorial.html'>Tutorial</a><ul><li><a href='Stage1.html'>Stage1</a></li></ul><li><a href='41323236-陳韋岑.html'>41323236-陳韋岑</a></li></ul></section></div></body></html>
+    <div id="tipue_search_content">Stage1 << <a href='Stage1.html'>Previous</a> <br /><h1>41323236-陳韋岑</h1>
+<p><span>Tutorial1:</span></p>
+<p>學習利用 Webots 建立模擬場景的第一階段工作, 是認識其套件功能表與場景所需的目錄及檔案架構. 並且學習如何利用控制器程式操縱場景中的物件. 這也是<span> </span><a href="https://mde.tw/cad2025/content/Tutorial1.html">Tutorial1</a><span> </span>操作的主要目的.</p>
+<p>worlds 儲存 .wbt 場景檔案</p>
+<p>protos 儲存 .proto 原形節點檔案</p>
+<p>controllers 儲存控制器程式檔案</p>
+<p>plugins 儲存用來延伸 Webots 物理特性的 C 或 C++ 程式檔案, 例如:<span> </span><a href="https://raw.githubusercontent.com/cyberbotics/webots/refs/heads/released/resources/projects/plugins/physics/physics.c">physics.c</a></p>
+<p>libraries 儲存場景中與 controllers 或 plugins 目錄中相關程式的共用程式庫檔案</p>
+<p><span>Tutorial2:</span></p>
+<p><a href="https://mde.tw/cad2025/content/Tutorial2.html">Tutorial2</a><span> </span>則說明如何使用 Webots 內建的基本幾何物件, 其中的物件幾何外形除了用於動力系統的運動方程式, 還可用於物體移動時的碰撞檢測. 建立物件時必須遵照 Solid - Shape - geometry 的樹狀結構規劃, 按照順序配置物件.</p>
+<p>其中 Solid - Shape - geometry Box 可以直接使用內建的幾何節點定義零件外形, 而 Solid - Shape - geometry Mesh 則可以導入自行繪製的 STL 或 OBJ 零件檔案, 而 Solid - CadShape 也可以導入 OBJ 零件檔案, 與 geometry Mesh 的差別為 Solid - Shape - geometry Mesh 可以直接在 Webots 中設定零件顏色, 而 Solid - CadShape 則由 OBJ 伴隨的 .mtl 決定其顏色與材質.</p>
+<p><span>Tutorial3:從設定場地到二連桿的操做</span></p>
+<p><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/AhclNGBmljk?si=fmlkLtS39_YtaQz-" title="YouTube video player" width="560"></iframe></p>
+<p>老師的參考影片:</p>
+<p><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/f1z9yWpLkHk?si=qG0ipEhJGVetm9Nv" title="YouTube video player" width="560"></iframe></p>
+<p><span>Tutorial4:</span></p>
+<p><span>從二連桿到五連桿以及劃出圖的操做</span></p>
+<p>影片1</p>
+<p><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/bjoCY13g8kg?si=RlviXw-GKwBALpnF" title="YouTube video player" width="560"></iframe></p>
+<p><span>影片2 過程中,有材質沒設定到,導致機構無法作動</span></p>
+<p><span><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/Ew7E6iJEqJc?si=Z-4-CUBCtwv0_v-T" title="YouTube video player" width="560"></iframe></span></p>
+<p><span>老師的參考影片:</span></p>
+<p><span><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" frameborder="0" height="315" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/VPyjCJ8JhYg?si=9OY55NYg_JGEeBNo" title="YouTube video player" width="560"></iframe></span></p><br />Stage1 << <a href='Stage1.html'>Previous</a> </div>
+        
+    <!-- footer -->
+      <div class="container">
+        <div class="row pt-3 mx-auto">
+            <p>
+            <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+            Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | This template is made with <i class="icon-heart" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank" >Colorlib</a>
+            <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+            </p>
+        </div>
+      </div>
+    <!-- for footer -->
+    
+        </div> <!-- for site wrap -->
+            <!-- <script src="../cmsimde/static/chimper/js/jquery-3.3.1.min.js"></script> -->
+            <script src="../cmsimde/static/chimper/js/jquery-migrate-3.0.1.min.js"></script>
+            <script src="../cmsimde/static/chimper/js/jquery-ui.js"></script>
+            <script src="../cmsimde/static/chimper/js/popper.min.js"></script>
+            <script src="../cmsimde/static/chimper/js/bootstrap.min.js"></script>
+            <script src="../cmsimde/static/chimper/js/owl.carousel.min.js"></script>
+            <script src="../cmsimde/static/chimper/js/jquery.stellar.min.js"></script>
+            <script src="../cmsimde/static/chimper/js/jquery.countdown.min.js"></script>
+            <script src="../cmsimde/static/chimper/js/jquery.magnific-popup.min.js"></script>
+            <script src="../cmsimde/static/chimper/js/bootstrap-datepicker.min.js"></script>
+            <script src="../cmsimde/static/chimper/js/aos.js"></script>
+            <!--
+            <script src="../cmsimde/static/chimper/js/typed.js"></script>
+                    <script>
+                    var typed = new Typed('.typed-words', {
+                    strings: ["Web Apps"," WordPress"," Mobile Apps"],
+                    typeSpeed: 80,
+                    backSpeed: 80,
+                    backDelay: 4000,
+                    startDelay: 1000,
+                    loop: true,
+                    showCursor: true
+                    });
+                    </script>
+            -->
+            <script src="../cmsimde/static/chimper/js/main.js"></script>
+        
+<!-- 啟用 LaTeX equations 編輯 -->
+  <!-- <script>
+  MathJax = {
+    tex: {inlineMath: [['$', '$'], ['\(', '\)']]}
+  };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>-->
+    </body></html>
+        
