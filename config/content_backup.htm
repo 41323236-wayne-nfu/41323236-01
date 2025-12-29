@@ -87,8 +87,154 @@ def forward(theta1_deg, theta2_deg, l1, l2, l3, l4):
      
 print(forward(30, 45, 67.27, 110, 110, 67.27))</pre>
 <p><span>Inverse Kinematics: </span><a href="https://mde.tw/cad2025/downloads/fivebar_inverse.py">fivebar_inverse.py</a></p>
+<p><img alt="" height="17" src="/images/螢幕擷取畫面 2025-12-28 174554.png" width="729"/></p>
+<p><span>幾何觀念</span></p>
+<ol>
+<li>給定 C 點座標，要反推出：</li>
+<li>B 點在以 A 為中心，半徑為 L1 的圓周上</li>
+<li>D 點在以 E 為中心，半徑為 L4 的圓周上</li>
+<li>B → C 與 D → C 分別長 L2, L3</li>
+<li>使用向量反推、餘弦定理與 atan2 組合來求解旋轉角。</li>
+</ol>
+<p><span>Inverse Kinematics:</span></p>
+<pre class="brush:html;auto-links:false;toolbar:false" contenteditable="false"># 逆向運動學：輸入 C 點位置與桿長，反推所有可能的角度組合
+import sympy as sp
+ 
+def inverse(cx_val, cy_val, l1_val, l2_val, l3_val, l4_val):
+    # 定義符號變數
+    Cx, Cy, L1, L2, L3, L4 = sp.symbols('Cx Cy L1 L2 L3 L4', real=True)
+ 
+    # 固定點 A 與 E
+    Ax, Ay = 0, 0
+    Ex, Ey = -50, 0
+ 
+    # ========== θ₁（順時針，從 +X 起算） ==========
+    vec_A = sp.Matrix([Cx - Ax, Cy - Ay])
+    r1 = vec_A.norm()
+    angle_A = sp.atan2(vec_A[1], vec_A[0])
+    cos_alpha1 = (L1**2 + r1**2 - L2**2) / (2 * L1 * r1)
+    cos_alpha1 = sp.Max(-1, sp.Min(1, cos_alpha1))  # 保護 acos 領域
+    alpha1 = sp.acos(cos_alpha1)
+    theta1_a = -sp.deg(angle_A - alpha1)
+    theta1_b = -sp.deg(angle_A + alpha1)
+ 
+    # ========== θ₂（逆時針，從 –X 起算） ==========
+    vec_E = sp.Matrix([Cx - Ex, Cy - Ey])
+    r2 = vec_E.norm()
+    angle_E = sp.atan2(vec_E[1], vec_E[0])
+    cos_alpha2 = (L4**2 + r2**2 - L3**2) / (2 * L4 * r2)
+    cos_alpha2 = sp.Max(-1, sp.Min(1, cos_alpha2))  # 保護 acos 領域
+    alpha2 = sp.acos(cos_alpha2)
+    # 補回 forward 中的 +180°
+    theta2_a = sp.deg(angle_E - alpha2) - 180
+    theta2_b = sp.deg(angle_E + alpha2) - 180
+ 
+    # 數值代入
+    subs = {
+        Cx: cx_val,
+        Cy: cy_val,
+        L1: l1_val,
+        L2: l2_val,
+        L3: l3_val,
+        L4: l4_val
+    }
+ 
+    try:
+        θ1a = float(theta1_a.evalf(subs=subs))
+        θ1b = float(theta1_b.evalf(subs=subs))
+        θ2a = float(theta2_a.evalf(subs=subs))
+        θ2b = float(theta2_b.evalf(subs=subs))
+    except Exception as e:
+        return [f"發生錯誤：{e}"]
+         
+    def normalize(a):
+        return round(a % 360, 4)
+ 
+ 
+    # 組合所有可能構型角度
+    results = [
+        (normalize(θ1a), normalize(θ2a)),
+        (normalize(θ1a), normalize(θ2b)),
+        (normalize(θ1b), normalize(θ2a)),
+        (normalize(θ1b), normalize(θ2b)),
+    ]
+ 
+    return results
+     
+print(inverse(-12.77, -117.63, 67.27, 110, 110, 67.27))
+</pre>
 <p></p>
-</div><h1>Tutorial</h1>
+</div>
+<h1>OpenDuck</h1>
+<h1>Plotter</h1>
+<p _msthash="361" _msttexthash="3249155624" dir="auto">為了確定 Webots 控制器程式碼中描述的五條連結機構的可繪製工作空間，並以綠色輪廓勾勒出輪廓，我們需要根據機構的運動學約束計算末端執行器（點 C）的可達工作空間。接著，我們會產生外邊界與內邊界等高線，並指示繪圖儀描繪這些等高線。以下是逐步的解決方案。</p>
+<hr/>
+<h4 _msthash="362" _msttexthash="84565416" dir="auto">步驟一：了解五條連結與工作空間</h4>
+<p _msthash="363" _msttexthash="1769061346" dir="auto">五桿連桿機構由兩個固定點（A 和 E）以及兩個可操作的接頭（θ1 和 θ2）組成，分別控制點 B 和 D 的位置。點 C 是端點效應器，由兩個以 B（半徑 L2）和 D（半徑 L3）為中心的圓的交點決定。其機制參數如下：</p>
+<ul dir="auto">
+<li _msthash="364" _msttexthash="144558388"><strong _istranslated="1">L1 = L4 = 0.1682公尺</strong>（第一與第四環節長度）</li>
+<li _msthash="365" _msttexthash="153383841"><strong _istranslated="1">L2 = L3 = 0.275公尺</strong>（第二與第三連結的長度）</li>
+<li _msthash="366" _msttexthash="111023523"><strong _istranslated="1">A = [0.0625， 0.15] m</strong>（θ1 的固定樞軸）</li>
+<li _msthash="367" _msttexthash="102494769"><strong _istranslated="1">E = [-0.0625， 0.15] m</strong>（θ2 固定樞軸）</li>
+<li _msthash="368" _msttexthash="94873129"><strong _istranslated="1">偏移 = 41.9872°</strong>（影響角度計算）</li>
+</ul>
+<p _msthash="369" _msttexthash="2368426749" dir="auto">工作空間是點C所有可能位置的集合，受關節角度θ1和θ2（範圍從-180°到180°）以及連結的幾何約束所限制。工作空間通常呈環狀區域（環狀區域），因為從A到B（L1）、B到C（L2）、E到D（L4）以及D到C（L3）的距離是固定的。</p>
+<h4 _msthash="370" _msttexthash="51344410" dir="auto">步驟 2：計算工作區邊界</h4>
+<p _msthash="371" _msttexthash="298571897" dir="auto">要找到工作空間，我們需要確定點 C 可能存在的區域的外界與內界。這包括：</p>
+<ul dir="auto">
+<li _msthash="372" _msttexthash="129942631"><strong _istranslated="1">外邊界</strong>：當連結完全延伸時，點C的最大範圍。</li>
+<li _msthash="373" _msttexthash="208612781"><strong _istranslated="1">內界</strong>：當連結向內摺疊，並受有效運動學解約束時的最小範圍。</li>
+</ul>
+<p _msthash="374" _msttexthash="1825297084" dir="auto">工作空間可透過取樣其射程內的接合角θ1與θ2，並利用正向運動學函數計算點C的對應位置來近似。邊界是透過尋找極點（從參考點到參考點的最大與最小徑向距離，例如A與E之間的原點或中點）來追蹤。</p>
+<h4 _msthash="375" _msttexthash="24645127" dir="auto">前向運動學回顧</h4>
+<p _msthash="376" _msttexthash="272016797" dir="auto"><span _istranslated="1">forward_kinematics（theta1_rad， theta2_rad）</span>函數計算點C如下：</p>
+<ol dir="auto">
+<li _msthash="377" _msttexthash="155750621"><strong _istranslated="1">點 B</strong>：<span _istranslated="1">B = A + L1 * [cos（θ1 + offset）， -sin（θ1 + offset）]</span></li>
+<li _msthash="378" _msttexthash="154110645"><strong _istranslated="1">點D</strong>：<span _istranslated="1">D = E - L4 * [cos（θ² + offset）， sin（θ² + offset）]</span></li>
+<li _msthash="379" _msttexthash="692079154"><strong _istranslated="1">點 C</strong>：以 B 為中心、半徑為 L2 的圓與以 D 為中心、半徑為 L3 的圓的交點。該函數選擇與較小 y 座標（肘部向下配置）的交點。</li>
+</ol>
+<h4 _msthash="380" _msttexthash="26757406" dir="auto">工作區邊界計算</h4>
+<p _msthash="381" _msttexthash="45109493" dir="auto">要追蹤工作區邊界：</p>
+<ul dir="auto">
+<li _msthash="382" _msttexthash="515499426"><strong _istranslated="1">外邊界</strong>：當連桿完全延伸時，例如當 B 與 C 對齊，使得從 A 到 C 的距離最大化（約 L1 + L2 = 0.1682 + 0.275 = 0.4432 公尺）時發生。</li>
+<li _msthash="383" _msttexthash="402668578"><strong _istranslated="1">內邊界</strong>：當連結被摺疊，且從 A 到 C 的距離最小，且必須在 B 與 D 的圓之間有有效交點時發生。</li>
+</ul>
+<p _msthash="384" _msttexthash="2452253284" dir="auto">我們可以在[-180°、180°]內對θ1和θ2進行細網格（例如每個角度360點）取樣，以計算所有可能的C點。這些點的凸包近似外邊界，而內邊界則需要識別距離參考點（例如原點）距離最小的配置，通常是當連結向內摺疊時。</p>
+<p _msthash="385" _msttexthash="854919091" dir="auto">簡化來說，我們假設工作空間圍繞連接 A 與 E 的直線對稱（y = 0.15 m），這是因為 L1 = L4 與 L2 = L3 的對稱性。我們透過以下方式計算工作空間：</p>
+<ol dir="auto">
+<li _msthash="386" _msttexthash="56590911">以增量（例如5°）取樣θ1和θ2。</li>
+<li _msthash="387" _msttexthash="92451606">對每對（θ1， θ2）使用<span> </span><span _istranslated="1">forward_kinematics</span><span> </span>計算 C。</li>
+<li _msthash="388" _msttexthash="84978283">收集有效的 C 點（存在交叉點）。</li>
+<li _msthash="389" _msttexthash="473843760">透過尋找參考點（例如原點 [0， 0]）對每個角度方向的最大與最小徑向距離，來確定外界與內界。</li>
+</ol>
+<h4 _msthash="390" _msttexthash="62022597" dir="auto">步驟三：產生工作空間輪廓</h4>
+<p _msthash="391" _msttexthash="58845696" dir="auto">產生外輪廓與內部輪廓：</p>
+<ul dir="auto">
+<li _msthash="392" _msttexthash="351041002"><strong _istranslated="1">外輪廓</strong>：對於原點周圍φ的每個角度（0， 0），找出最大徑向距離 |C|= sqrt（x² + y²）。</li>
+<li _msthash="393" _msttexthash="282253751"><strong _istranslated="1">內輪廓</strong>：對每個角度φ，找出徑向距離最小的C點，確保有效的運動學解。</li>
+</ul>
+<p _msthash="394" _msttexthash="56198649" dir="auto">計算輪廓的演算法如下：</p>
+<ol dir="auto">
+<li _msthash="395" _msttexthash="126685299">定義一個角度範圍φ（0到360°，例如360點）。</li>
+<li _msthash="396" _msttexthash="366296801">對每個φ，遍歷一個由 θ1 和 θ2 值組成的格點（例如，每個 72 個點，每點 5° 遞增）。</li>
+<li _msthash="397" _msttexthash="92091948">對每個（θ1， θ2）使用<span _istranslated="1">forward_kinematics</span>計算C。</li>
+<li _msthash="398" _msttexthash="104878124">計算徑向距離|C|以及 C 相對於原點的角度。</li>
+<li _msthash="399" _msttexthash="161221060">C組依其角度φ點（在一個小公差範圍內，例如±2.5°）。</li>
+<li _msthash="400" _msttexthash="153316709">選擇最大值（外層）與最小值（內層） |C|每個φ箱。</li>
+<li _msthash="401" _msttexthash="69456452">依φ排序點，創造平滑的輪廓。</li>
+</ol>
+<h4 _msthash="402" _msttexthash="49379785" dir="auto">步驟四：繪製Webots輪廓圖</h4>
+<p _msthash="403" _msttexthash="1515920406" dir="auto">所提供的程式碼已包含一種機制，可以在 Webots 中使用 <span _istranslated="1">IndexedLineSet</span> 繪製綠線。我們會修改，以綠色繪製兩個獨立等高線（外輪廓和內輪廓），確保工作空間連續時是封閉迴圈。</p>
+<h4 _msthash="404" _msttexthash="61590048" dir="auto">步驟五：用繪圖機掃視輪廓</h4>
+<p _msthash="405" _msttexthash="81310606" dir="auto">要讓繪圖儀描繪外側和內側輪廓：</p>
+<ol dir="auto">
+<li _msthash="406" _msttexthash="334909211">使用<span _istranslated="1">inverse_kinematics</span>函數計算外輪廓與內輪廓上每個點的 （θ1， θ²）。</li>
+<li _msthash="407" _msttexthash="290172792">應用與原始程式碼相同的插值與控制邏輯，依序將繪圖儀沿每個等高線移動。</li>
+<li _msthash="408" _msttexthash="258912030">如原始程式碼所示，利用聯合空間中的線性插值確保點間的平滑躍遷。</li>
+</ol>
+<h4 _msthash="409" _msttexthash="4253730" dir="auto">實作</h4>
+<p _msthash="410" _msttexthash="1146739230" dir="auto">以下是修改後的程式碼，用來計算工作區邊界、繪製綠色等高線，並控制繪圖儀追蹤這兩個等高線。此程式碼透過新增工作區計算與輪廓追蹤，擴展原有程式碼。</p>
+<h1>Tutorial</h1>
 <p>Webots 執行環境硬體需求:</p>
 <p>2GHz 4 核心以上 CPU, NVIDIA 或 AMD 支援 OpenGL 3.3 版, 帶有 512 MB 記憶體以上獨立顯示卡</p>
 <p>操作系統:</p>
@@ -150,7 +296,8 @@ print(forward(30, 45, 67.27, 110, 110, 67.27))</pre>
 <p>plugins 儲存用來延伸 Webots 物理特性的 C 或 C++ 程式檔案, 例如:<span> </span><a href="https://raw.githubusercontent.com/cyberbotics/webots/refs/heads/released/resources/projects/plugins/physics/physics.c">physics.c</a></p>
 <p>libraries 儲存場景中與 controllers 或 plugins 目錄中相關程式的共用程式庫檔案</p>
 <p><a href="https://mde.tw/cad2025/content/Tutorial2.html">Tutorial2</a><span> </span>則說明如何使用 Webots 內建的基本幾何物件, 其中的物件幾何外形除了用於動力系統的運動方程式, 還可用於物體移動時的碰撞檢測. 建立物件時必須遵照 Solid - Shape - geometry 的樹狀結構規劃, 按照順序配置物件.</p>
-<p>其中 Solid - Shape - geometry Box 可以直接使用內建的幾何節點定義零件外形, 而 Solid - Shape - geometry Mesh 則可以導入自行繪製的 STL 或 OBJ 零件檔案, 而 Solid - CadShape 也可以導入 OBJ 零件檔案, 與 geometry Mesh 的差別為 Solid - Shape - geometry Mesh 可以直接在 Webots 中設定零件顏色, 而 Solid - CadShape 則由 OBJ 伴隨的 .mtl 決定其顏色與材質.</p><h1>41323236-陳韋岑</h1>
+<p>其中 Solid - Shape - geometry Box 可以直接使用內建的幾何節點定義零件外形, 而 Solid - Shape - geometry Mesh 則可以導入自行繪製的 STL 或 OBJ 零件檔案, 而 Solid - CadShape 也可以導入 OBJ 零件檔案, 與 geometry Mesh 的差別為 Solid - Shape - geometry Mesh 可以直接在 Webots 中設定零件顏色, 而 Solid - CadShape 則由 OBJ 伴隨的 .mtl 決定其顏色與材質.</p>
+<h1>41323236-陳韋岑</h1>
 <p><span>Tutorial1:</span></p>
 <p>學習利用 Webots 建立模擬場景的第一階段工作, 是認識其套件功能表與場景所需的目錄及檔案架構. 並且學習如何利用控制器程式操縱場景中的物件. 這也是<span> </span><a href="https://mde.tw/cad2025/content/Tutorial1.html">Tutorial1</a><span> </span>操作的主要目的.</p>
 <p>worlds 儲存 .wbt 場景檔案</p>
